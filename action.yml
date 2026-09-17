@@ -6,6 +6,10 @@ inputs:
     description: 'Set up a libvirt networking hook to configure systemd-resolved'
     required: false
     type: boolean
+  fips_workaround:
+    description: 'Disable the use of ed25519 SSH keys to comply with FIPS requirements'
+    required: false
+    type: boolean
 runs:
   using: "composite"
   steps:
@@ -26,3 +30,8 @@ runs:
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends vagrant vagrant-libvirt libvirt-daemon-system libvirt-daemon qemu-system-x86 qemu-utils dnsmasq
         sudo chmod 666 /var/run/libvirt/libvirt-sock
+    - name: 'Patch Vagrant not to use ed25519 keys'
+      if: ${{ inputs.fips_workaround }}
+      shell: bash
+      run: |
+        sudo sed -i '/PREFER_KEY_TYPES/ s/"ssh-ed25519".freeze => :ed25519, //' /usr/lib/x86_64-linux-gnu/rubygems-integration/*/gems/vagrant-*/lib/vagrant/util/keypair.rb
